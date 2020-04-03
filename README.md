@@ -1,4 +1,4 @@
-# BloggingApp
+# BloggingApp made using Django 3.0.5, Bootstrap 3 ,HTML 5 , CSS 3
 
 Clone This Project (Make Sure You Have Git Installed)
 ```
