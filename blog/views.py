@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.views.generic import ListView,DetailView,CreateView,UpdateView,DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin,UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 
 # Create your views here.
 
@@ -11,6 +12,7 @@ class PostListView(ListView):
     model=Post
     template_name="blog/home.html"
     context_object_name="posts"
+    queryset = Post.objects.filter(is_verified=True).select_related('author')
     ordering=['-date_posted']
     paginate_by=5
 
@@ -23,18 +25,27 @@ class UserPostListView(ListView):
     
     def get_queryset(self):
         user=get_object_or_404(User,username=self.kwargs.get('username'))
-        return Post.objects.filter(author=user).order_by('date_posted')
+        return Post.objects.filter(author=user, is_verified=True).order_by('date_posted')
 
 class PostDetailView(DetailView):
     model=Post
 
+    def get_queryset(self):
+        return Post.objects.filter(is_verified=True).select_related('author')
+
 class PostCreateView(LoginRequiredMixin,CreateView):
     model=Post
     fields=['title','content']
+    success_url = '/'
     
     def form_valid(self,form):
         form.instance.author=self.request.user
         return super().form_valid(form)
+    
+    def post(self, request, *args, **kwargs):
+        response = super(PostCreateView, self).post(request, *args, **kwargs)
+        messages.success(request, 'Your post will be added here after verification')
+        return response
 
 class PostUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
     model=Post
